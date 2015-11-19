@@ -27,6 +27,8 @@
 #include "common.h"
 #include "plugin.h"
 
+#include "rapl.h"
+
 #include <unistd.h>
 
 /*
@@ -36,15 +38,45 @@
  */
 #define MAXIMUM_INTERVAL_MS 30000
 
-static void energy_submit (unsigned int cpu_id, gauge_t package, gauge_t core, gauge_t uncore, gauge_t dram)
+uint64_t rapl_node_count = 0;
+double **prev_sample = NULL;
+double **cum_energy_J = NULL;
+
+double get_rapl_energy_info (uint64_t power_domain, uint64_t node)
+{
+    int          err;
+    double       total_energy_consumed;
+
+    switch (power_domain) {
+    case PKG:
+        err = get_pkg_total_energy_consumed(node, &total_energy_consumed);
+        break;
+    case PP0:
+        err = get_pp0_total_energy_consumed(node, &total_energy_consumed);
+        break;
+    case PP1:
+        err = get_pp1_total_energy_consumed(node, &total_energy_consumed);
+        break;
+    case DRAM:
+        err = get_dram_total_energy_consumed(node, &total_energy_consumed);
+        break;
+    default:
+        err = MY_ERROR;
+        break;
+    }
+
+    return total_energy_consumed;
+}
+
+static void energy_submit (unsigned int cpu_id, double measurements[4])
 {
     value_t values[4];
     value_list_t vl = VALUE_LIST_INIT;
 
-    values[0].gauge = package;
-    values[1].gauge = core;
-    values[2].gauge = uncore;
-    values[3].gauge = dram;
+    values[0].gauge = measurements[0];
+    values[1].gauge = measurements[1];
+    values[2].gauge = measurements[2];
+    values[3].gauge = measurements[3];
 
     vl.values = values;
     vl.values_len = STATIC_ARRAY_SIZE (values);
@@ -59,7 +91,30 @@ static void energy_submit (unsigned int cpu_id, gauge_t package, gauge_t core, g
 
 static int energy_read (void)
 {
-    energy_submit(99, 41, 42, 43, 44);
+    int node;
+    int domain;
+    double new_sample;
+    double delta;
+
+    for (node = 0; node < rapl_node_count; node++) {
+        for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
+            if (is_supported_domain(domain)) {
+                new_sample = get_rapl_energy_info(domain, node);
+                delta = new_sample - prev_sample[node][domain];
+
+                /* Handle wraparound */
+                if (delta < 0) {
+                    delta += MAX_ENERGY_STATUS_JOULES;
+                }
+
+                prev_sample[node][domain] = new_sample;
+                cum_energy_J[node][domain] += delta;
+            }
+        }
+
+        energy_submit(node, cum_energy_J[node]);
+    }
+
 
     return (0);
 }
@@ -71,10 +126,37 @@ static int energy_read_complex (user_data_t *user_data)
 
 static int energy_init (void)
 {
+    int node, domain;
+
+    if (0 != init_rapl()) {
+        terminate_rapl();
+        return MY_ERROR;
+    }
+    rapl_node_count = get_num_rapl_nodes_pkg();
+
+    prev_sample = malloc(rapl_node_count * sizeof(double*));
+    cum_energy_J = malloc(rapl_node_count * sizeof(double*));
+
+    /* Read initial values */
+    for (node = 0; node < rapl_node_count; node++) {
+        prev_sample[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
+        cum_energy_J[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
+
+        for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
+            if (is_supported_domain(domain)) {
+                prev_sample[node][domain] = get_rapl_energy_info(domain, node);
+            }
+        }
+    }
+
+    return 0;
 }
 
 static int energy_shutdown (void)
 {
+    terminate_rapl();
+
+    return 0;
 }
 
 void module_register (void)
