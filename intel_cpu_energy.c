@@ -29,6 +29,13 @@
 
 #include <unistd.h>
 
+/*
+ * The CPUs' energy usage should be checked regularly so we won't miss any
+ * counter overflows. The plugin will therefore fall back to a maximum interval
+ * if the global interval is too long.
+ */
+#define MAXIMUM_INTERVAL_MS 30000
+
 static void energy_submit (unsigned int cpu_id, gauge_t package, gauge_t core, gauge_t uncore, gauge_t dram)
 {
     value_t values[4];
@@ -57,7 +64,22 @@ static int energy_read (void)
     return (0);
 }
 
+static int energy_read_complex (user_data_t *user_data)
+{
+    return energy_read ();
+}
+
 void module_register (void)
 {
-    plugin_register_read ("intel_cpu_energy", energy_read);
+    uint64_t global_interval_ms = CDTIME_T_TO_MS(plugin_get_interval());
+    if (global_interval_ms <= MAXIMUM_INTERVAL_MS)
+    {
+        /* use global interval */
+        plugin_register_read ("intel_cpu_energy", energy_read);
+    } else {
+        /* override global interval with locally defined maximum interval */
+        cdtime_t local_interval_cdtime = MS_TO_CDTIME_T(MAXIMUM_INTERVAL_MS);
+        plugin_register_complex_read (/* group = */ NULL, "intel_cpu_energy",
+                energy_read_complex, local_interval_cdtime, /* user data = */ NULL);
+    }
 } /* void module_register */
