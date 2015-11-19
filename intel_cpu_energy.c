@@ -69,8 +69,19 @@ static int energy_read_complex (user_data_t *user_data)
     return energy_read ();
 }
 
+static int energy_init (void)
+{
+}
+
+static int energy_shutdown (void)
+{
+}
+
 void module_register (void)
 {
+    plugin_register_init ("intel_cpu_energy", energy_init);
+    plugin_register_shutdown ("intel_cpu_energy", energy_shutdown);
+
     uint64_t global_interval_ms = CDTIME_T_TO_MS(plugin_get_interval());
     if (global_interval_ms <= MAXIMUM_INTERVAL_MS)
     {
