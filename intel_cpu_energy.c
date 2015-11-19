@@ -1,8 +1,6 @@
 /**
  * collectd - src/intel_cpu_energy.c
- * Copyright (C) 2005-2008  Florian octo Forster
- * Copyright (C) 2009       Manuel Sanmartin
- * Copyright (C) 2013       Vedran Bartonicek
+ * Copyright (C) 2015  Nils Steinger
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,6 +16,8 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Authors:
+ *   Nils Steinger <nst at voidptr.com>
+ * Based on the load plugin developed by:
  *   Florian octo Forster <octo at collectd.org>
  *   Manuel Sanmartin
  *   Vedran Bartonicek <vbartoni at gmail.com>
