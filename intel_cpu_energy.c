@@ -23,9 +23,29 @@
  *   Vedran Bartonicek <vbartoni at gmail.com>
  **/
 
-#include "collectd.h"
-#include "common.h"
-#include "plugin.h"
+#if ! HAVE_CONFIG_H
+
+#include <stdlib.h>
+
+#include <string.h>
+
+#ifndef __USE_ISOC99 /* required for NAN */
+# define DISABLE_ISOC99 1
+# define __USE_ISOC99 1
+#endif /* !defined(__USE_ISOC99) */
+#include <math.h>
+#if DISABLE_ISOC99
+# undef DISABLE_ISOC99
+# undef __USE_ISOC99
+#endif /* DISABLE_ISOC99 */
+
+#include <time.h>
+
+#endif /* ! HAVE_CONFIG */
+
+#include <collectd/core/collectd.h>
+#include <collectd/core/common.h>
+#include <collectd/core/plugin.h>
 
 #include "rapl.h"
 
@@ -171,8 +191,10 @@ void module_register (void)
         plugin_register_read ("intel_cpu_energy", energy_read);
     } else {
         /* override global interval with locally defined maximum interval */
-        cdtime_t local_interval_cdtime = MS_TO_CDTIME_T(MAXIMUM_INTERVAL_MS);
+        // cdtime_t local_interval_cdtime = MS_TO_CDTIME_T(MAXIMUM_INTERVAL_MS);
+        struct timespec interval;
+        interval.tv_sec = MAXIMUM_INTERVAL_MS / 1000;
         plugin_register_complex_read (/* group = */ NULL, "intel_cpu_energy",
-                energy_read_complex, local_interval_cdtime, /* user data = */ NULL);
+                energy_read_complex, &interval, /* user data = */ NULL);
     }
 } /* void module_register */
