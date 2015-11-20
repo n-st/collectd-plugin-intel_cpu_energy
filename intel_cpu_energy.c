@@ -58,6 +58,13 @@
  */
 #define MAXIMUM_INTERVAL_MS 30000
 
+char* RAPL_DOMAIN_STRINGS[RAPL_NR_DOMAIN] = {
+    "package",
+    "core",
+    "uncore",
+    "dram"
+};
+
 uint64_t rapl_node_count = 0;
 double **prev_sample = NULL;
 double **cum_energy_J = NULL;
@@ -88,23 +95,26 @@ double get_rapl_energy_info (uint64_t power_domain, uint64_t node)
     return total_energy_consumed;
 }
 
-static void energy_submit (unsigned int cpu_id, double measurements[4])
+static void energy_submit (unsigned int cpu_id, unsigned int domain, double measurement)
 {
-    value_t values[4];
+    /*
+     * An Identifier is of the form host/plugin-instance/type-instance with
+     * both instance-parts being optional.
+     * In our case: [host]/intel_cpu_energy-[e.g. cpu0]/energy-[e.g. package]
+     */
+
     value_list_t vl = VALUE_LIST_INIT;
 
-    values[0].gauge = measurements[0];
-    values[1].gauge = measurements[1];
-    values[2].gauge = measurements[2];
-    values[3].gauge = measurements[3];
-
+    value_t values[1];
+    values[0].gauge = measurement;
     vl.values = values;
     vl.values_len = STATIC_ARRAY_SIZE (values);
 
     sstrncpy (vl.host, hostname_g, sizeof (vl.host));
     sstrncpy (vl.plugin, "intel_cpu_energy", sizeof (vl.plugin));
-	ssnprintf (vl.plugin_instance, sizeof (vl.plugin_instance), "cpu%u", cpu_id);
-    sstrncpy (vl.type, "intel_cpu_energy", sizeof (vl.type));
+    ssnprintf (vl.plugin_instance, sizeof (vl.plugin_instance), "cpu%u", cpu_id);
+    sstrncpy (vl.type, "energy", sizeof (vl.type));
+    sstrncpy (vl.type_instance, RAPL_DOMAIN_STRINGS[domain], sizeof (vl.type_instance));
 
     plugin_dispatch_values (&vl);
 }
@@ -129,10 +139,10 @@ static int energy_read (void)
 
                 prev_sample[node][domain] = new_sample;
                 cum_energy_J[node][domain] += delta;
+
+                energy_submit(node, domain, cum_energy_J[node][domain]);
             }
         }
-
-        energy_submit(node, cum_energy_J[node]);
     }
 
 

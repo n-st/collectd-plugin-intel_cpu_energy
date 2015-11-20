@@ -1,1 +1,1 @@
-intel_cpu_energy		package:GAUGE:0:4294967295, core:GAUGE:0:4294967295, uncore:GAUGE:0:4294967295, dram:GAUGE:0:4294967295
+energy		value:GAUGE:0:U
