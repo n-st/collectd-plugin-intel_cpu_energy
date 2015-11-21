@@ -94,7 +94,7 @@ int get_rapl_energy_info (uint64_t power_domain, uint64_t node, double *total_en
     return err;
 }
 
-static void energy_submit (unsigned int cpu_id, unsigned int domain, double measurement)
+static int energy_submit (unsigned int cpu_id, unsigned int domain, double measurement)
 {
     /*
      * An Identifier is of the form host/plugin-instance/type-instance with
@@ -115,7 +115,7 @@ static void energy_submit (unsigned int cpu_id, unsigned int domain, double meas
     sstrncpy (vl.type, "energy", sizeof (vl.type));
     sstrncpy (vl.type_instance, RAPL_DOMAIN_NAMES[domain], sizeof (vl.type_instance));
 
-    plugin_dispatch_values (&vl);
+    return plugin_dispatch_values (&vl);
 }
 
 static int energy_read (void)
@@ -144,7 +144,10 @@ static int energy_read (void)
                 prev_sample[node][domain] = new_sample;
                 cum_energy_J[node][domain] += delta;
 
-                energy_submit(node, domain, cum_energy_J[node][domain]);
+                err = energy_submit(node, domain, cum_energy_J[node][domain]);
+                if (err) {
+                    return err;
+                }
             }
         }
     }
