@@ -69,30 +69,29 @@ uint64_t rapl_node_count = 0;
 double **prev_sample = NULL;
 double **cum_energy_J = NULL;
 
-double get_rapl_energy_info (uint64_t power_domain, uint64_t node)
+int get_rapl_energy_info (uint64_t power_domain, uint64_t node, double *total_energy_consumed)
 {
     int          err;
-    double       total_energy_consumed;
 
     switch (power_domain) {
     case PKG:
-        err = get_pkg_total_energy_consumed(node, &total_energy_consumed);
+        err = get_pkg_total_energy_consumed(node, total_energy_consumed);
         break;
     case PP0:
-        err = get_pp0_total_energy_consumed(node, &total_energy_consumed);
+        err = get_pp0_total_energy_consumed(node, total_energy_consumed);
         break;
     case PP1:
-        err = get_pp1_total_energy_consumed(node, &total_energy_consumed);
+        err = get_pp1_total_energy_consumed(node, total_energy_consumed);
         break;
     case DRAM:
-        err = get_dram_total_energy_consumed(node, &total_energy_consumed);
+        err = get_dram_total_energy_consumed(node, total_energy_consumed);
         break;
     default:
         err = MY_ERROR;
         break;
     }
 
-    return total_energy_consumed;
+    return err;
 }
 
 static void energy_submit (unsigned int cpu_id, unsigned int domain, double measurement)
@@ -121,6 +120,7 @@ static void energy_submit (unsigned int cpu_id, unsigned int domain, double meas
 
 static int energy_read (void)
 {
+    int err;
     int node;
     int domain;
     double new_sample;
@@ -129,7 +129,11 @@ static int energy_read (void)
     for (node = 0; node < rapl_node_count; node++) {
         for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
             if (is_supported_domain(domain)) {
-                new_sample = get_rapl_energy_info(domain, node);
+                err = get_rapl_energy_info(domain, node, &new_sample);
+                if (err) {
+                    return err;
+                }
+
                 delta = new_sample - prev_sample[node][domain];
 
                 /* Handle wraparound */
@@ -156,7 +160,7 @@ static int energy_read_complex (user_data_t *user_data)
 
 static int energy_init (void)
 {
-    int node, domain;
+    int err, node, domain;
 
     if (0 != init_rapl()) {
         terminate_rapl();
@@ -174,7 +178,10 @@ static int energy_init (void)
 
         for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
             if (is_supported_domain(domain)) {
-                prev_sample[node][domain] = get_rapl_energy_info(domain, node);
+                err = get_rapl_energy_info(domain, node, &(prev_sample[node][domain]));
+                if (err) {
+                    return err;
+                }
             }
         }
     }
