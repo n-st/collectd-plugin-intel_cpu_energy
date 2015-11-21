@@ -215,11 +215,26 @@ void module_register (void)
     {
         /* use global interval */
         plugin_register_read ("intel_cpu_energy", energy_read);
+
     } else {
         /* override global interval with locally defined maximum interval */
-        // cdtime_t local_interval_cdtime = MS_TO_CDTIME_T(MAXIMUM_INTERVAL_MS);
+
+        /*
+         * As of commit cce136946b879557f91183e4de58e92b81e138c8 (2015-06-06),
+         * plugin_register_complex_read expects the interval to be of type
+         * cdtime_t. Prior to that, it used to be a struct timespec.
+         * Uncomment the appropriate line for the API version you're using.
+         */
+
+        /* Anything up to, and including, version 5.5.0: */
         struct timespec interval;
         interval.tv_sec = MAXIMUM_INTERVAL_MS / 1000;
+        interval.tv_nsec = (MAXIMUM_INTERVAL_MS % 1000) * 1000L;
+
+        /* Anything after 2015-06-06, so whatever release will come *after*
+         * 5.5.0: */
+        // cdtime_t interval = MS_TO_CDTIME_T(MAXIMUM_INTERVAL_MS);
+
         plugin_register_complex_read (/* group = */ NULL, "intel_cpu_energy",
                 energy_read_complex, &interval, /* user data = */ NULL);
     }
