@@ -1,32 +1,32 @@
 Collectd plugin "intel_cpu_energy"
 ==================================
 
-This [collectd][collectd] plugin allows power usage monitoring for 2nd
-Generation Intel® Core™ processors or later.
+This [collectd][collectd] plugin measures and reports the power usage of 2nd
+Generation (or later) Intel® Core™ processors.
 It will report up to four values for each physical processor: the accumulated
 energy usage (in Joules) for the "package", "core", "uncore", and "dram"
-domains, as reported by the CPU.
+domains, as reported by the CPU. Not all domains are supported by all CPU
+models, so some of them might be missing on your system.
 The code for these measurements is based on Intel's [Power Gadget 2.5 for
 Linux][powergadget].
 
 Requirements
 ------------
 
-To read the CPU's internal energy measurement, the plugin requires write access
-to the CPU's model-specific registers (MSRs). For this, **the `msr` kernel
-module has to be loaded**.
+To read the CPU's internal energy measurements, the plugin requires write
+access to the CPU's model-specific registers (MSRs). For this, **the `msr`
+kernel module has to be loaded**.
 In addition, write access to /dev/cpu/\*/msr, along with the SYS_RAWIO
-capability, are required, but since collectd runs its plugins with root
+capability, is required, but since collectd runs its plugins with root
 privileges anyway, those permissions should be available by default.
 
 To build the module, you will need to have the `collectd-dev` package installed
-(at least on Debian-based systems; the package name might differ on other
-distributions).
+(the package name might differ on non-Debian-based distributions).
 
 The module has been successfully tested with version 5.4.0-3ubuntu2 of
 `collectd-dev` (on Ubuntu 14.04), but collectd's plugin API can be highly
-unstable, even between minor versions, so it might not work with other
-versions.
+unstable, even between minor versions, so it might not work out of the box with
+other versions.
 
 Building and installing
 -----------------------
@@ -39,7 +39,7 @@ Building and installing
     service collectd restart
 
 You might need to change the `TypesDB` line if you are already using a custom
-data-set definition files (e.g. `my_types.db`).
+data-set definition file (e.g. `my_types.db`).
 
 Usage
 -----
