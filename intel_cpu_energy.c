@@ -1,5 +1,5 @@
 /**
- * collectd - src/intel_cpu_energy.c
+ * collectd - intel_cpu_energy.c
  * Copyright (C) 2015  Nils Steinger
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -15,8 +15,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * Authors:
- *   Nils Steinger <nst at voidptr.com>
+ * Author:
+ *   Nils Steinger <git at n-st dot de>
  * Based on the load plugin developed by:
  *   Florian octo Forster <octo at collectd.org>
  *   Manuel Sanmartin
