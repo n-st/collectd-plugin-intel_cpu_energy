@@ -157,10 +157,9 @@ int
 build_topology() {
 
     int err;
-    uint64_t i,j;
+    uint64_t i;
     uint64_t max_pkg = 0;
     os_cpu_count = sysconf(_SC_NPROCESSORS_CONF);
-    cpu_set_t curr_context;
     cpu_set_t prev_context;
 
     // Construct an os map: os_map[APIC_ID ... APIC_ID]
