@@ -58,7 +58,7 @@
  */
 #define MAXIMUM_INTERVAL_MS 30000
 
-char* RAPL_DOMAIN_STRINGS[RAPL_NR_DOMAIN] = {
+static const char * const RAPL_DOMAIN_NAMES[RAPL_NR_DOMAIN] = {
     "package",
     "core",
     "uncore",
@@ -114,7 +114,7 @@ static void energy_submit (unsigned int cpu_id, unsigned int domain, double meas
     sstrncpy (vl.plugin, "intel_cpu_energy", sizeof (vl.plugin));
     ssnprintf (vl.plugin_instance, sizeof (vl.plugin_instance), "cpu%u", cpu_id);
     sstrncpy (vl.type, "energy", sizeof (vl.type));
-    sstrncpy (vl.type_instance, RAPL_DOMAIN_STRINGS[domain], sizeof (vl.type_instance));
+    sstrncpy (vl.type_instance, RAPL_DOMAIN_NAMES[domain], sizeof (vl.type_instance));
 
     plugin_dispatch_values (&vl);
 }
