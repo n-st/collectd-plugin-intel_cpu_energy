@@ -52,6 +52,13 @@ Each data point will contain the accumulated energy consumption in Joules (=
 Watt seconds) since the last (re-)start of `collectd`.
 The value is internally processed as a double-precision floating point number,
 so you shouldn't encounter any problems with overflows.
+However, the measurement value reported by the CPU can (and will) overflow
+eventually. The plugin will detect and compensate for this, but it has to make
+sure it won't "miss" an overflow (= more than one overflow occurring between
+successive readouts of the CPU registers. To ensure this, the plugin will
+enforce a 60 second polling interval if the global interval is greater than
+that. Shorter polling intervals than 60 seconds will be accepted and used
+unchanged.
 
 
 [collectd]: https://github.com/collectd/collectd/
