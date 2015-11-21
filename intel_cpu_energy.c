@@ -56,7 +56,7 @@
  * counter overflows. The plugin will therefore fall back to a maximum interval
  * if the global interval is too long.
  */
-#define MAXIMUM_INTERVAL_MS 30000
+#define MAXIMUM_INTERVAL_MS 60000
 
 static const char * const RAPL_DOMAIN_NAMES[RAPL_NR_DOMAIN] = {
     "package",
