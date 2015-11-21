@@ -173,11 +173,17 @@ static int energy_init (void)
 
     prev_sample = malloc(rapl_node_count * sizeof(double*));
     cum_energy_J = malloc(rapl_node_count * sizeof(double*));
+    if (prev_sample == NULL || cum_energy_J == NULL) {
+        return MY_ERROR;
+    }
 
     /* Read initial values */
     for (node = 0; node < rapl_node_count; node++) {
         prev_sample[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
         cum_energy_J[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
+        if (prev_sample[node] == NULL || cum_energy_J[node] == NULL) {
+            return MY_ERROR;
+        }
 
         for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
             if (is_supported_domain(domain)) {
