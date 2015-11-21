@@ -32,14 +32,14 @@ Building and installing
 -----------------------
 
     make clean all
-    cp intel_cpu_energy.so /usr/lib/collectd/
-    cp energy-type.db /etc/collectd/
-    echo 'LoadPlugin intel_cpu_energy' > /etc/collectd/collectd.conf.d/intel_cpu_energy.conf
-    echo 'TypesDB "/usr/share/collectd/types.db" "/etc/collectd/energy-type.db"' >> /etc/collectd/collectd.conf.d/intel_cpu_energy.conf
+    sudo make install
     service collectd restart
 
-You might need to change the `TypesDB` line if you are already using a custom
-data-set definition file (e.g. `my_types.db`).
+Beware that this will override collectd's `TypesDB` option (in a separate file,
+so it's easily reversible), so you might want to install the plugin manually if
+you are already using a custom data-set definition file (e.g. `my_types.db`).
+Take a look at the `install` target in the `Makefile` for hints on how to do
+that.
 
 Usage
 -----

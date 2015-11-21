@@ -5,7 +5,9 @@ LFLAGS = -L.
 LIBS = -lm
 SRCS = cpuid.c intel_cpu_energy.c msr.c rapl.c
 OBJS = $(SRCS:.c=.o)
-MAIN = intel_cpu_energy.so
+PLUGIN_NAME = intel_cpu_energy
+MAIN = $(PLUGIN_NAME).so
+TYPE_DB = energy-type.db
 DEPS = cpuid.h msr.h rapl.h
 
 all:    $(MAIN)
@@ -22,6 +24,17 @@ $(MAIN): $(OBJS)
 
 clean:
 	$(RM) $(OBJS) *~ $(MAIN)
+
+install: $(MAIN) $(TYPE_DB)
+	cp $(MAIN) /usr/lib/collectd/
+	cp $(TYPE_DB) /etc/collectd/
+	echo 'LoadPlugin $(PLUGIN_NAME)' > /etc/collectd/collectd.conf.d/intel_cpu_energy.conf
+	echo 'TypesDB "/usr/share/collectd/types.db" "/etc/collectd/$(TYPE_DB)"' >> /etc/collectd/collectd.conf.d/intel_cpu_energy.conf
+
+uninstall:
+	rm -f /usr/lib/collectd/$(MAIN)
+	rm -f /etc/collectd/$(TYPE_DB)
+	rm -f /etc/collectd/collectd.conf.d/intel_cpu_energy.conf
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^
