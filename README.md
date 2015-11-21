@@ -3,10 +3,12 @@ Collectd plugin "intel_cpu_energy"
 
 This [collectd][collectd] plugin measures and reports the power usage of 2nd
 Generation (or later) Intel® Core™ processors.
+
 It will report up to four values for each physical processor: the accumulated
 energy usage (in Joules) for the "package", "core", "uncore", and "dram"
 domains, as reported by the CPU. Not all domains are supported by all CPU
 models, so some of them might be missing on your system.
+
 The code for these measurements is based on Intel's [Power Gadget 2.5 for
 Linux][powergadget].
 
@@ -50,6 +52,7 @@ The plugin will produce data sets named according to the pattern
 
 Each data point will contain the accumulated energy consumption in Joules (=
 Watt seconds) since the last (re-)start of `collectd`.
+
 The value is internally processed as a double-precision floating point number,
 so you shouldn't encounter any problems with overflows.
 However, the measurement value reported by the CPU can (and will) overflow
