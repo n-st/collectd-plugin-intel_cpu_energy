@@ -68,6 +68,8 @@ static const char * const RAPL_DOMAIN_NAMES[RAPL_NR_DOMAIN] = {
 uint64_t rapl_node_count = 0;
 double **prev_sample = NULL;
 double **cum_energy_J = NULL;
+// Not to be confused with is_supported_domain()!
+double **rapl_domain_actually_supported = NULL;
 
 int get_rapl_energy_info (uint64_t power_domain, uint64_t node, double *total_energy_consumed)
 {
@@ -128,7 +130,7 @@ static int energy_read (void)
 
     for (node = 0; node < rapl_node_count; node++) {
         for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
-            if (is_supported_domain(domain)) {
+            if (rapl_domain_actually_supported[node][domain]) {
                 err = get_rapl_energy_info(domain, node, &new_sample);
                 if (err) {
                     return err;
@@ -173,6 +175,7 @@ static int energy_init (void)
 
     prev_sample = malloc(rapl_node_count * sizeof(double*));
     cum_energy_J = malloc(rapl_node_count * sizeof(double*));
+    rapl_domain_actually_supported = malloc(rapl_node_count * sizeof(double*));
     if (prev_sample == NULL || cum_energy_J == NULL) {
         return MY_ERROR;
     }
@@ -181,15 +184,17 @@ static int energy_init (void)
     for (node = 0; node < rapl_node_count; node++) {
         prev_sample[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
         cum_energy_J[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
+        rapl_domain_actually_supported[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
         if (prev_sample[node] == NULL || cum_energy_J[node] == NULL) {
             return MY_ERROR;
         }
 
         for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
             if (is_supported_domain(domain)) {
-                err = get_rapl_energy_info(domain, node, &(prev_sample[node][domain]));
-                if (err) {
-                    return err;
+                if (0 != get_rapl_energy_info(domain, node, &(prev_sample[node][domain]))) {
+                    rapl_domain_actually_supported[node][domain] = 0;
+                } else {
+                    rapl_domain_actually_supported[node][domain] = 1;
                 }
             }
         }
