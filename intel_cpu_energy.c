@@ -133,6 +133,7 @@ static int energy_read (void)
             if (rapl_domain_actually_supported[node][domain]) {
                 err = get_rapl_energy_info(domain, node, &new_sample);
                 if (err) {
+                    ERROR ("intel_cpu_energy plugin: Failed to get RAPL energy information for node %d, domain %d (%s): Return value %d", node, domain, RAPL_DOMAIN_NAMES[domain], err);
                     return err;
                 }
 
@@ -148,6 +149,7 @@ static int energy_read (void)
 
                 err = energy_submit(node, domain, cum_energy_J[node][domain]);
                 if (err) {
+                    ERROR ("intel_cpu_energy plugin: Failed to submit energy information for node %d, domain %d (%s): Return value %d", node, domain, RAPL_DOMAIN_NAMES[domain], err);
                     return err;
                 }
             }
@@ -167,16 +169,20 @@ static int energy_init (void)
 {
     int err, node, domain;
 
-    if (0 != init_rapl()) {
+    err = init_rapl();
+    if (0 != err) {
+        ERROR ("intel_cpu_energy plugin: RAPL initialisation failed with return value %d", err);
         terminate_rapl();
         return MY_ERROR;
     }
     rapl_node_count = get_num_rapl_nodes_pkg();
+    INFO ("intel_cpu_energy plugin: found %lu nodes (physical CPUs)", rapl_node_count);
 
     prev_sample = malloc(rapl_node_count * sizeof(double*));
     cum_energy_J = malloc(rapl_node_count * sizeof(double*));
     rapl_domain_actually_supported = malloc(rapl_node_count * sizeof(double*));
     if (prev_sample == NULL || cum_energy_J == NULL) {
+        ERROR ("intel_cpu_energy plugin: Memory allocation failed for outer persistent array");
         return MY_ERROR;
     }
 
@@ -186,12 +192,17 @@ static int energy_init (void)
         cum_energy_J[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
         rapl_domain_actually_supported[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
         if (prev_sample[node] == NULL || cum_energy_J[node] == NULL) {
+            ERROR ("intel_cpu_energy plugin: Memory allocation failed for inner persistent array (node %d)", node);
             return MY_ERROR;
         }
 
         for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
             if (is_supported_domain(domain)) {
+                DEBUG ("intel_cpu_energy plugin: Node %d claims it supports domain %d (%s)", node, domain, RAPL_DOMAIN_NAMES[domain]);
                 if (0 != get_rapl_energy_info(domain, node, &(prev_sample[node][domain]))) {
+                    WARNING ("intel_cpu_energy plugin: Node %d claims it supports domain %d (%s) but an attempt to read it"
+                             "has failed with return value %d. Will not try to read this domain of this node again.",
+                             node, domain, RAPL_DOMAIN_NAMES[domain], err);
                     rapl_domain_actually_supported[node][domain] = 0;
                 } else {
                     rapl_domain_actually_supported[node][domain] = 1;
