@@ -197,15 +197,17 @@ static int energy_init (void)
         }
 
         for (domain = 0; domain < RAPL_NR_DOMAIN; ++domain) {
+            rapl_domain_actually_supported[node][domain] = 0;
+
             if (is_supported_domain(domain)) {
                 DEBUG ("intel_cpu_energy plugin: Node %d claims it supports domain %d (%s)", node, domain, RAPL_DOMAIN_NAMES[domain]);
+                rapl_domain_actually_supported[node][domain] = 1;
+
                 if (0 != get_rapl_energy_info(domain, node, &(prev_sample[node][domain]))) {
                     WARNING ("intel_cpu_energy plugin: Node %d claims it supports domain %d (%s) but an attempt to read it"
                              "has failed with return value %d. Will not try to read this domain of this node again.",
                              node, domain, RAPL_DOMAIN_NAMES[domain], err);
                     rapl_domain_actually_supported[node][domain] = 0;
-                } else {
-                    rapl_domain_actually_supported[node][domain] = 1;
                 }
             }
         }
