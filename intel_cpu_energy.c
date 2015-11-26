@@ -178,9 +178,9 @@ static int energy_init (void)
     rapl_node_count = get_num_rapl_nodes_pkg();
     INFO ("intel_cpu_energy plugin: found %lu nodes (physical CPUs)", rapl_node_count);
 
-    prev_sample = malloc(rapl_node_count * sizeof(double*));
-    cum_energy_J = malloc(rapl_node_count * sizeof(double*));
-    rapl_domain_actually_supported = malloc(rapl_node_count * sizeof(double*));
+    prev_sample = calloc(rapl_node_count, sizeof(double*));
+    cum_energy_J = calloc(rapl_node_count, sizeof(double*));
+    rapl_domain_actually_supported = calloc(rapl_node_count, sizeof(double*));
     if (prev_sample == NULL || cum_energy_J == NULL) {
         ERROR ("intel_cpu_energy plugin: Memory allocation failed for outer persistent array");
         return MY_ERROR;
@@ -188,9 +188,9 @@ static int energy_init (void)
 
     /* Read initial values */
     for (node = 0; node < rapl_node_count; node++) {
-        prev_sample[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
-        cum_energy_J[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
-        rapl_domain_actually_supported[node] = malloc(RAPL_NR_DOMAIN * sizeof(double));
+        prev_sample[node] = calloc(RAPL_NR_DOMAIN, sizeof(double));
+        cum_energy_J[node] = calloc(RAPL_NR_DOMAIN, sizeof(double));
+        rapl_domain_actually_supported[node] = calloc(RAPL_NR_DOMAIN, sizeof(double));
         if (prev_sample[node] == NULL || cum_energy_J[node] == NULL) {
             ERROR ("intel_cpu_energy plugin: Memory allocation failed for inner persistent array (node %d)", node);
             return MY_ERROR;
