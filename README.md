@@ -33,7 +33,24 @@ other versions.
 Building and installing
 -----------------------
 
+Collectd's plugin API was moved to a different directory in commit 216c624 and
+changed to use a different time representation in commit cce1369.
+These changes will be included in Collectd versions 5.5.0 and higher.
+
+### Collectd version >= 5.5.0
+
+For those new version, simply run the following:
+
     make clean all
+    sudo make install
+    service collectd restart
+
+### Collectd version < 5.5.0
+
+For all older Collectd versions (within reason), pass a preprocessor definition
+to the C compiler to substitute the relevant portions of the code:
+
+    CFLAGS="-DCOLLECTD_VERSION_LT_5_5" make clean all
     sudo make install
     service collectd restart
 

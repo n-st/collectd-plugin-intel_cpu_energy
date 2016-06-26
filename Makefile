@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -DHAVE_CONFIG_H -shared -fPIC -g
-INCLUDES = -I. -I/usr/include/collectd/ -I/usr/include/
+CFLAGS := -Wall -DHAVE_CONFIG_H -shared -fPIC -g $(CFLAGS)
+INCLUDES = -I. -I/usr/include/collectd/
 LFLAGS = -L.
 LIBS = -lm
 SRCS = cpuid.c intel_cpu_energy.c msr.c rapl.c

@@ -43,9 +43,19 @@
 
 #endif /* ! HAVE_CONFIG */
 
-#include <collectd/core/collectd.h>
-#include <collectd/core/common.h>
-#include <collectd/core/plugin.h>
+#ifdef COLLECTD_VERSION_LT_5_5
+# include <core/collectd.h>
+# include <core/common.h>
+# include <core/plugin.h>
+#else
+/*
+ * collectd daemon files were moved to the daemon/ subdirectory in commit
+ * 216c6246b73645ac093de15b87aedc9abc6ebc80 (2014-09-20).
+ */
+# include <core/daemon/collectd.h>
+# include <core/daemon/common.h>
+# include <core/daemon/plugin.h>
+#endif /* COLLECTD_VERSION_LT_5_5 */
 
 #include "rapl.h"
 
@@ -237,6 +247,7 @@ void module_register (void)
     } else {
         /* override global interval with locally defined maximum interval */
 
+#ifdef COLLECTD_VERSION_LT_5_5
         /*
          * As of commit cce136946b879557f91183e4de58e92b81e138c8 (2015-06-06),
          * plugin_register_complex_read expects the interval to be of type
@@ -249,9 +260,14 @@ void module_register (void)
         interval.tv_sec = MAXIMUM_INTERVAL_MS / 1000;
         interval.tv_nsec = (MAXIMUM_INTERVAL_MS % 1000) * 1000L;
 
-        /* Anything after 2015-06-06, so whatever release will come *after*
-         * 5.5.0: */
-        // cdtime_t interval = MS_TO_CDTIME_T(MAXIMUM_INTERVAL_MS);
+#else
+        /*
+         * Anything that includes the commit cce1369, e.g. the master branch,
+         * but apparently not the releases 5.5.0 and 5.5.1.
+         */
+        cdtime_t interval = MS_TO_CDTIME_T(MAXIMUM_INTERVAL_MS);
+
+#endif /* COLLECTD_VERSION_LT_5_5 */
 
         plugin_register_complex_read (/* group = */ NULL, "intel_cpu_energy",
                 energy_read_complex, &interval, /* user data = */ NULL);
